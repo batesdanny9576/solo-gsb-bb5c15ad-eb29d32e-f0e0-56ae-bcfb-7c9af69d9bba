@@ -14,6 +14,7 @@ import SearchBatchPanel from './components/SearchBatchPanel'
 import ImportDialog from './components/ImportDialog'
 import MigrationDialog from './components/MigrationDialog'
 import MemoView from './components/MemoView'
+import { codePointLength, codePointSlice } from './textIndex'
 
 export default function App() {
   const [docs, setDocs] = useState([])
@@ -605,9 +606,10 @@ export default function App() {
   const sidebarCodings = useMemo(() => {
     if (!docData) return []
     const content = docData.document.content
+    // 区间为码位下标：按码位切片，保证含 emoji 时侧栏摘录与后端一致
     return visibleCodings.map((c) => ({
       ...c,
-      text: content.slice(c.start, c.end),
+      text: codePointSlice(content, c.start, c.end),
     }))
   }, [docData, visibleCodings])
 
@@ -666,7 +668,7 @@ export default function App() {
           <div className="doc-meta">
             <strong>{doc.title}</strong>
             <span>
-              全文 {doc.content.length} 字 · {codings.length} 条编码标注
+              全文 {codePointLength(doc.content)} 字 · {codings.length} 条编码标注
               {filters !== null && `（筛选后 ${visibleCodings.length} 条）`}
             </span>
           </div>

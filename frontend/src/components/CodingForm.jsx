@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { codePointLength, codePointSlice, codePointTruncate } from '../textIndex'
 
 const NEW_CODE = '__new__'
 
@@ -33,10 +34,18 @@ export default function CodingForm({ codes, content, selection, editing, onSubmi
   const snippet = useMemo(() => {
     const s = Number(start)
     const e = Number(end)
-    if (!content || Number.isNaN(s) || Number.isNaN(e) || e <= s || s < 0 || e > content.length) {
+    // 输入框与 API 的区间都是 Unicode 码位下标，按码位切片预览原文
+    if (
+      !content ||
+      Number.isNaN(s) ||
+      Number.isNaN(e) ||
+      e <= s ||
+      s < 0 ||
+      e > codePointLength(content)
+    ) {
       return null
     }
-    return content.slice(s, e)
+    return codePointSlice(content, s, e)
   }, [content, start, end])
 
   const valid =
@@ -123,15 +132,18 @@ export default function CodingForm({ codes, content, selection, editing, onSubmi
 
       {snippet !== null && (
         <div className="snippet-preview" title={snippet}>
-          「{snippet.length > 80 ? snippet.slice(0, 80) + '…' : snippet}」
-          <em>{snippet.length} 字</em>
+          「{codePointTruncate(snippet, 80)}」
+          <em>{codePointLength(snippet)} 字</em>
         </div>
       )}
 
       <button type="submit" className="primary-btn" disabled={!valid}>
         {editing ? '保存修改' : '添加编码'}
       </button>
-      <p className="hint">提示：在左侧文本上拖选可自动填入区间；区间为半开区间 [起始, 结束)。</p>
+      <p className="hint">
+        提示：在左侧文本上拖选可自动填入区间；区间为半开区间 [起始, 结束)，
+        下标按 Unicode 字符（码位）计，emoji 等补充平面字符只占 1 个下标、不会被拆开。
+      </p>
     </form>
   )
 }

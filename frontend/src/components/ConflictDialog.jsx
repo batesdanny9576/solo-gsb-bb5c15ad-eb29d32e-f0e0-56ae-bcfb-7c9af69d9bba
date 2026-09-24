@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { codePointSlice, codePointTruncate } from '../textIndex'
 
 const TYPE_LABEL = {
   same_code: '同名重叠',
@@ -42,7 +43,7 @@ export default function ConflictDialog({ preview, content, onResolve, onCancel }
         <ul className="conflict-list">
           {conflicts.map((c, i) => {
             const cg = c.coding
-            const text = content.slice(cg.start, cg.end)
+            const text = codePointSlice(content, cg.start, cg.end)
             return (
               <li key={i}>
                 <span className={`tag tag-${c.type}`}>{TYPE_LABEL[c.type]}</span>
@@ -55,7 +56,7 @@ export default function ConflictDialog({ preview, content, onResolve, onCancel }
                   [{cg.start}, {cg.end})
                 </code>
                 <span className="conflict-text">
-                  「{text.length > 40 ? text.slice(0, 40) + '…' : text}」
+                  「{codePointTruncate(text, 40)}」
                 </span>
               </li>
             )

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
+import { codePointTruncate } from '../textIndex'
 
-/** 压缩空白并截断 */
+/** 压缩空白并按码位截断（不拆 emoji） */
 function excerpt(text, max = 60) {
   if (text == null) return ''
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return codePointTruncate(flat, max)
 }
 
 /** 后端时间为 UTC（datetime('now')），转成本地时区展示 */

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { api } from '../api'
 import TextView from './TextView'
+import { codePointLength } from '../textIndex'
 
 /**
  * 文档版本迁移对话框：
@@ -30,7 +31,7 @@ export default function MigrationDialog({ docId, oldContent, onClose, onMigrated
   const [stale, setStale] = useState(null)
   const paneRef = useRef(null)
 
-  const newLength = newContent.length
+  const newLength = codePointLength(newContent)
 
   // 新正文面板上的叠加标注：已确定区间的保留 / 待确认项（供整体预览）
   const previewCodings = useMemo(() => {
@@ -233,7 +234,7 @@ export default function MigrationDialog({ docId, oldContent, onClose, onMigrated
                   onChange={(e) => setNewContent(e.target.value)}
                 />
                 <p className="hint">
-                  旧正文 {oldContent.length} 字 · 新正文 {newLength} 字
+                  旧正文 {codePointLength(oldContent)} 字 · 新正文 {newLength} 字
                 </p>
                 {error && <div className="error-banner import-error">{error}</div>}
               </div>

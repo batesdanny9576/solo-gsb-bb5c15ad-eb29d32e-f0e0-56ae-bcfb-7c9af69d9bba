@@ -1,11 +1,17 @@
 import { useMemo, useRef } from 'react'
+import { createTextIndex } from '../textIndex'
 
-/** 把文本按所有编码边界切成原子段，每段携带覆盖它的编码列表 */
+/**
+ * 把文本按所有编码边界切成原子段，每段携带覆盖它的编码列表。
+ * 区间一律为 Unicode 码位坐标（与 API / 数据库一致）；切原文时经索引
+ * 转成 UTF-16 偏移，绝不会把补充平面字符（如 emoji）的代理对切开。
+ */
 export function buildSegments(content, codings) {
-  const points = new Set([0, content.length])
+  const idx = createTextIndex(content)
+  const points = new Set([0, idx.length])
   for (const c of codings) {
     points.add(Math.max(0, c.start))
-    points.add(Math.min(content.length, c.end))
+    points.add(Math.min(idx.length, c.end))
   }
   const sorted = [...points].sort((a, b) => a - b)
   const segments = []
@@ -16,7 +22,7 @@ export function buildSegments(content, codings) {
     segments.push({
       start: s,
       end: e,
-      text: content.slice(s, e),
+      text: idx.slice(s, e),
       codings: codings.filter((c) => c.start <= s && c.end >= e),
     })
   }
@@ -54,10 +60,13 @@ function segmentStyle(codings) {
 
 /**
  * 文本视图：渲染原子段并把鼠标拖选映射回字符区间。
+ * DOM Selection / Range 使用 UTF-16 码元偏移，这里统一换算为码位下标后
+ * 再回调 onSelect，保证提交给后端的区间按 Unicode 字符定位、不拆代理对。
  */
 export default function TextView({ content, codings, selection, flashRange, onSelect }) {
   const ref = useRef(null)
   const segments = useMemo(() => buildSegments(content, codings), [content, codings])
+  const index = useMemo(() => createTextIndex(content), [content])
 
   function locateOffset(node, offset) {
     const container = ref.current
@@ -66,10 +75,14 @@ export default function TextView({ content, codings, selection, flashRange, onSe
     const span = el && el.closest ? el.closest('[data-s]') : null
     if (!span || !container.contains(span)) return null
     try {
+      // span.dataset.s 是码位起点；Range 内文字长度是 UTF-16 码元数，
+      // 经索引把“码位起点 + 码元偏移”换算成绝对码位下标
+      const spanStart = Number(span.dataset.s)
+      const spanUtf16 = index.toUtf16(spanStart)
       const range = document.createRange()
       range.selectNodeContents(span)
       range.setEnd(node, offset)
-      return Number(span.dataset.s) + range.toString().length
+      return index.toCodePoint(spanUtf16 + range.toString().length)
     } catch {
       return null
     }

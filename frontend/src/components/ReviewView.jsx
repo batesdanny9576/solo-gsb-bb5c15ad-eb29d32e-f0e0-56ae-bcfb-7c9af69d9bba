@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { codePointTruncate } from '../textIndex'
 
-/** 列表摘录：压缩空白并截断 */
+/** 列表摘录：压缩空白并按码位截断（不拆 emoji） */
 function excerpt(text, max = 80) {
   if (text == null) return ''
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return codePointTruncate(flat, max)
 }
 
 const STATUS_META = {
