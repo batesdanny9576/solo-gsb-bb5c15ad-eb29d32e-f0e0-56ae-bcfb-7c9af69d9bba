@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from './api'
+import { charLength, sliceByChars } from './unicode'
 import TextView from './components/TextView'
 import CodingForm from './components/CodingForm'
 import ConflictDialog from './components/ConflictDialog'
@@ -605,9 +606,10 @@ export default function App() {
   const sidebarCodings = useMemo(() => {
     if (!docData) return []
     const content = docData.document.content
+    // 标注区间是 Unicode 字符下标，切片需按字符换算，避免切开代理对
     return visibleCodings.map((c) => ({
       ...c,
-      text: content.slice(c.start, c.end),
+      text: sliceByChars(content, c.start, c.end),
     }))
   }, [docData, visibleCodings])
 
@@ -666,7 +668,7 @@ export default function App() {
           <div className="doc-meta">
             <strong>{doc.title}</strong>
             <span>
-              全文 {doc.content.length} 字 · {codings.length} 条编码标注
+              全文 {charLength(doc.content)} 字 · {codings.length} 条编码标注
               {filters !== null && `（筛选后 ${visibleCodings.length} 条）`}
             </span>
           </div>

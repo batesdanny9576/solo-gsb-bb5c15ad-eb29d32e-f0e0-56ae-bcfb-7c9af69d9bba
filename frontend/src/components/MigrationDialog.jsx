@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { api } from '../api'
+import { charLength } from '../unicode'
 import TextView from './TextView'
 
 /**
@@ -16,6 +17,8 @@ import TextView from './TextView'
  * 预览后正文或标注发生变化会返回过期错误（422，migration_preview_stale），
  * 此时不写入并展示过期提示、引导重新生成预览；其余校验失败仍可调整后重试。
  * 取消 / 关闭不产生任何写入。
+ * 全部候选 / 建议 / 手选区间均为 Unicode 字符下标（与后端一致）；
+ * 新正文预览中的拖选经 TextView 换算，不会拆分代理对。
  */
 export default function MigrationDialog({ docId, oldContent, onClose, onMigrated }) {
   const [newContent, setNewContent] = useState(oldContent)
@@ -30,7 +33,8 @@ export default function MigrationDialog({ docId, oldContent, onClose, onMigrated
   const [stale, setStale] = useState(null)
   const paneRef = useRef(null)
 
-  const newLength = newContent.length
+  // 新正文长度按 Unicode 字符数计，与后端 len(new_content) 口径一致
+  const newLength = charLength(newContent)
 
   // 新正文面板上的叠加标注：已确定区间的保留 / 待确认项（供整体预览）
   const previewCodings = useMemo(() => {
@@ -233,7 +237,7 @@ export default function MigrationDialog({ docId, oldContent, onClose, onMigrated
                   onChange={(e) => setNewContent(e.target.value)}
                 />
                 <p className="hint">
-                  旧正文 {oldContent.length} 字 · 新正文 {newLength} 字
+                  旧正文 {charLength(oldContent)} 字 · 新正文 {newLength} 字
                 </p>
                 {error && <div className="error-banner import-error">{error}</div>}
               </div>

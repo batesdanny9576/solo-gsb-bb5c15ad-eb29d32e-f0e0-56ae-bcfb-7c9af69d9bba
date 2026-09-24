@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { charLength, sliceByChars, truncateByChars } from '../unicode'
 
 const NEW_CODE = '__new__'
 
 /**
  * 编码表单：拖选或手动输入区间，选择既有编码或新建编码。
  * editing 非空时为编辑模式。
+ * 区间为 Unicode 字符下标（与后端一致），预览切片按字符换算。
  */
 export default function CodingForm({ codes, content, selection, editing, onSubmit, onCancelEdit }) {
   const [codeChoice, setCodeChoice] = useState('')
@@ -33,10 +35,10 @@ export default function CodingForm({ codes, content, selection, editing, onSubmi
   const snippet = useMemo(() => {
     const s = Number(start)
     const e = Number(end)
-    if (!content || Number.isNaN(s) || Number.isNaN(e) || e <= s || s < 0 || e > content.length) {
+    if (!content || Number.isNaN(s) || Number.isNaN(e) || e <= s || s < 0 || e > charLength(content)) {
       return null
     }
-    return content.slice(s, e)
+    return sliceByChars(content, s, e)
   }, [content, start, end])
 
   const valid =
@@ -123,8 +125,8 @@ export default function CodingForm({ codes, content, selection, editing, onSubmi
 
       {snippet !== null && (
         <div className="snippet-preview" title={snippet}>
-          「{snippet.length > 80 ? snippet.slice(0, 80) + '…' : snippet}」
-          <em>{snippet.length} 字</em>
+          「{truncateByChars(snippet, 80)}」
+          <em>{charLength(snippet)} 字</em>
         </div>
       )}
 

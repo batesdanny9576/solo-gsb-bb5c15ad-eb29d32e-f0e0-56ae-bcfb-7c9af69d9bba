@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { truncateByChars } from '../unicode'
 
-/** 列表摘录：压缩空白并截断，避免整段状态区间撑爆列表 */
+/** 列表摘录：压缩空白并按字符截断（不拆分代理对），避免整段状态区间撑爆列表 */
 function excerpt(text, max = 60) {
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return truncateByChars(flat, max)
 }
 
 const transKey = (t) => `${t.from_code_ids.join('+')}→${t.to_code_ids.join('+')}`

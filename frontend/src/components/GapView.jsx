@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
+import { truncateByChars } from '../unicode'
 
 const pct = (r) => `${(r * 100).toFixed(1)}%`
 
-/** 列表摘录：压缩空白并截断，避免整段缺口撑爆列表 */
+/** 列表摘录：压缩空白并按字符截断（不拆分代理对），避免整段缺口撑爆列表 */
 function excerpt(text, max = 120) {
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return truncateByChars(flat, max)
 }
 
 /**

@@ -22,7 +22,7 @@ docker compose up --build
 
 ## 功能说明
 
-- **区间编码**：在文本上**拖选**，或在表单中直接输入半开区间 `[起始, 结束)`，选择既有编码或新建编码即可添加标注；支持对同一文本叠加多个编码（重叠高亮以渐变条带呈现）。
+- **区间编码**：在文本上**拖选**，或在表单中直接输入半开区间 `[起始, 结束)`，选择既有编码或新建编码即可添加标注；支持对同一文本叠加多个编码（重叠高亮以渐变条带呈现）。区间坐标统一为 **Unicode 字符下标**（与后端 `len()` / 切片及数据库一致）；正文含 emoji 等补充平面字符（UTF-16 代理对）时，前端在正文分段、高亮、拖选回填、手填区间预览与迁移新正文选区统一做字符 ↔ 码元边界转换，定位、检索命中与缺口区间始终对应原文，不会错位或拆分代理对。
 - **冲突实时检测**：提交前先调用 `POST /api/codings/preview` 检测——
   - **同名冲突**：相同编码的区间相互重叠；
   - **嵌套冲突**：不同编码的区间互相包含（含两个方向）。
@@ -176,5 +176,6 @@ npm run dev   # http://localhost:5173
     ├── nginx.conf          # 静态托管 + /api 反向代理
     └── src/
         ├── App.jsx         # 状态编排与冲突决策流
+        ├── unicode.js      # Unicode 字符下标 ↔ UTF-16 码元坐标互转（补充平面字符安全）
         └── components/     # TextView / CodingForm / SearchBatchPanel / ImportDialog / MigrationDialog / ConflictDialog / Sidebar / CooccurrenceView / SpeakerView / DistributionView / GapView / TransitionView / ReviewView / MemoView
 ```

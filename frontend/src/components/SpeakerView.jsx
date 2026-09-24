@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { truncateByChars } from '../unicode'
 
 const UNATTRIBUTED_KEY = '__unattributed__'
 const TURNS = 'turns' // 明细类型：发言段落
@@ -8,10 +9,10 @@ const keyOf = (s) => (s.unattributed ? UNATTRIBUTED_KEY : s.name)
 const nameOf = (s) => (s.unattributed ? '未标注说话人' : s.name)
 const pct = (r) => `${(r * 100).toFixed(1)}%`
 
-/** 列表摘录：压缩空白并截断，避免整段发言撑爆列表 */
+/** 列表摘录：压缩空白并按字符截断（不拆分代理对），避免整段发言撑爆列表 */
 function excerpt(text, max = 120) {
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return truncateByChars(flat, max)
 }
 
 /**

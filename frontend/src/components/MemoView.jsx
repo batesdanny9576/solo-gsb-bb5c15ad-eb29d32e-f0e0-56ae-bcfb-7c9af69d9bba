@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
+import { truncateByChars } from '../unicode'
 
-/** 压缩空白并截断 */
+/** 压缩空白并按字符截断（不拆分代理对） */
 function excerpt(text, max = 60) {
   if (text == null) return ''
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return truncateByChars(flat, max)
 }
 
 /** 后端时间为 UTC（datetime('now')），转成本地时区展示 */

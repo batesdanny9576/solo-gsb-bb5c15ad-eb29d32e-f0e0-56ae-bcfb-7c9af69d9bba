@@ -1,13 +1,20 @@
 import { useMemo, useRef } from 'react'
+import { buildUtf16Map, charLength } from '../unicode'
 
-/** 把文本按所有编码边界切成原子段，每段携带覆盖它的编码列表 */
+/**
+ * 把文本按所有编码边界切成原子段，每段携带覆盖它的编码列表。
+ * 编码区间与分段起止均为 Unicode 字符下标（与后端一致）；切片时先经
+ * UTF-16 映射换算成码元下标，补充平面字符（代理对）不会被切开。
+ */
 export function buildSegments(content, codings) {
-  const points = new Set([0, content.length])
+  const total = charLength(content)
+  const points = new Set([0, total])
   for (const c of codings) {
     points.add(Math.max(0, c.start))
-    points.add(Math.min(content.length, c.end))
+    points.add(Math.min(total, c.end))
   }
   const sorted = [...points].sort((a, b) => a - b)
+  const utf16 = buildUtf16Map(content)
   const segments = []
   for (let i = 0; i < sorted.length - 1; i++) {
     const s = sorted[i]
@@ -16,7 +23,7 @@ export function buildSegments(content, codings) {
     segments.push({
       start: s,
       end: e,
-      text: content.slice(s, e),
+      text: content.slice(utf16[s], utf16[e]),
       codings: codings.filter((c) => c.start <= s && c.end >= e),
     })
   }
@@ -54,6 +61,8 @@ function segmentStyle(codings) {
 
 /**
  * 文本视图：渲染原子段并把鼠标拖选映射回字符区间。
+ * 对外暴露的 selection / flashRange / onSelect 均为 Unicode 字符下标；
+ * 仅组件内部把 DOM 选区的 UTF-16 码元偏移换算回字符下标。
  */
 export default function TextView({ content, codings, selection, flashRange, onSelect }) {
   const ref = useRef(null)
@@ -69,7 +78,9 @@ export default function TextView({ content, codings, selection, flashRange, onSe
       const range = document.createRange()
       range.selectNodeContents(span)
       range.setEnd(node, offset)
-      return Number(span.dataset.s) + range.toString().length
+      // range.toString() 按 UTF-16 码元计长；按字符数换算回字符下标。
+      // 端点落在代理对中间时该字符整体计入，边界不会拆分补充平面字符。
+      return Number(span.dataset.s) + charLength(range.toString())
     } catch {
       return null
     }

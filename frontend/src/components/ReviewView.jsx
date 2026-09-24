@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { truncateByChars } from '../unicode'
 
-/** 列表摘录：压缩空白并截断 */
+/** 列表摘录：压缩空白并按字符截断（不拆分代理对） */
 function excerpt(text, max = 80) {
   if (text == null) return ''
   const flat = text.replace(/\s+/g, ' ').trim()
-  return flat.length > max ? `${flat.slice(0, max)}…` : flat
+  return truncateByChars(flat, max)
 }
 
 const STATUS_META = {
